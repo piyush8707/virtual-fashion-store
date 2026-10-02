@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { Sparkles, UserCircle2 } from "lucide-react";
+
 export default function Home() {
   return (
     <main className="min-h-[calc(100vh-80px)] flex items-center justify-center overflow-hidden relative">
@@ -20,7 +21,8 @@ export default function Home() {
           >
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-magicAccent/10 text-magicAccent text-sm font-semibold">
               <Sparkles className="w-4 h-4" />
-              <span>AI-Powered Virtual Fitting</span>
+              {/* Yahan maine text change kar diya hai */}
+              <span>Next-Gen 3D Virtual Fitting</span> 
             </div>
             
             <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
@@ -47,7 +49,6 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative h-[600px] w-full rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center"
           >
-            {/* Yahan baad mein hamara Three.js ka 3D model aayega */}
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-10 grayscale"></div>
             
             <div className="relative text-center z-10 flex flex-col items-center">
