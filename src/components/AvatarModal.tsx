@@ -1,10 +1,14 @@
 "use client";
 import { useState } from "react";
 import { X, UploadCloud, Camera, Sparkles, CheckCircle2 } from "lucide-react";
+import { useAvatarStore } from "../store/useAvatarStore"; // Dimag import kiya
 
 export default function AvatarModal({ onClose }: { onClose: () => void }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  // Memory se function nikala jo status update karega
+  const setAvatarReady = useAvatarStore((state) => state.setAvatarReady);
 
   const handleUpload = () => {
     setIsUploading(true);
@@ -12,7 +16,11 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
     setTimeout(() => {
       setIsUploading(false);
       setIsSuccess(true);
-      // Close modal after success
+      
+      // JAISE HI SUCCESS HUA, GLOBAL MEMORY UPDATE KAR DI
+      setAvatarReady();
+      
+      // 2 second baad modal band kar do
       setTimeout(() => onClose(), 2000);
     }, 3000);
   };
@@ -21,7 +29,6 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
       <div className="bg-surface w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl transform transition-all">
         
-        {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-100">
           <h2 className="font-heading text-2xl font-bold text-textMain">Create 3D Twin</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
@@ -29,7 +36,6 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-8 flex flex-col items-center">
           
           {isSuccess ? (
@@ -52,7 +58,6 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
               <h3 className="text-xl font-bold text-textMain mb-2">Analyzing Body Mesh...</h3>
               <p className="text-textMuted text-sm">AI is extracting measurements from your photo.</p>
               
-              {/* Progress Bar */}
               <div className="w-full bg-gray-100 h-2 rounded-full mt-6 overflow-hidden">
                 <div className="bg-magicAccent h-full w-2/3 animate-pulse rounded-full"></div>
               </div>
@@ -66,7 +71,6 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
                 Upload a full-body, front-facing photo with good lighting for the most accurate 3D measurements.
               </p>
 
-              {/* Upload Dropzone */}
               <div 
                 onClick={handleUpload}
                 className="w-full border-2 border-dashed border-gray-300 hover:border-magicAccent bg-gray-50 hover:bg-magicAccent/5 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors group"
