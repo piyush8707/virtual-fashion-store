@@ -1,28 +1,48 @@
 "use client";
 import { useState } from "react";
 import { X, UploadCloud, Camera, Sparkles, CheckCircle2 } from "lucide-react";
-import { useAvatarStore } from "../store/useAvatarStore"; // Dimag import kiya
+import { useAvatarStore } from "../store/useAvatarStore";
+
+// Backend URL configuration - Professional way to handle API URLs in frontend code
+const BACKEND_API_URL = "http://localhost:8000";
 
 export default function AvatarModal({ onClose }: { onClose: () => void }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Initializing Engine...");
+  const [progress, setProgress] = useState(0);
   
-  // Memory se function nikala jo status update karega
   const setAvatarReady = useAvatarStore((state) => state.setAvatarReady);
 
   const handleUpload = () => {
     setIsUploading(true);
-    // Simulate AI processing time (3 seconds)
-    setTimeout(() => {
-      setIsUploading(false);
-      setIsSuccess(true);
-      
-      // JAISE HI SUCCESS HUA, GLOBAL MEMORY UPDATE KAR DI
-      setAvatarReady();
-      
-      // 2 second baad modal band kar do
-      setTimeout(() => onClose(), 2000);
-    }, 3000);
+    setProgress(5); // Initial progress
+
+    // Yahan hum FastAPI ke SSE stream se connect kar rahe hain
+    const eventSource = new EventSource(`${BACKEND_API_URL}/api/stream-avatar`);
+
+    // Jaise hi naya data (tukda) aayega, yeh function chalega
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setLoadingMessage(data.message);
+      setProgress(data.progress);
+
+      if (data.progress === 100) {
+        eventSource.close(); // Stream band kar do
+        setIsUploading(false);
+        setIsSuccess(true);
+        setAvatarReady();
+        
+        setTimeout(() => onClose(), 2000);
+      }
+    };
+
+    // Agar connection tut jaye
+    eventSource.onerror = (error) => {
+      console.error("SSE Error:", error);
+      eventSource.close();
+      setLoadingMessage("Connection failed. Try again.");
+    };
   };
 
   return (
@@ -55,11 +75,15 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
                   <Sparkles className="w-8 h-8 text-magicAccent animate-pulse" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-textMain mb-2">Analyzing Body Mesh...</h3>
-              <p className="text-textMuted text-sm">AI is extracting measurements from your photo.</p>
+              <h3 className="text-xl font-bold text-textMain mb-2">{loadingMessage}</h3>
+              <p className="text-textMuted text-sm">{progress}% Complete</p>
               
+              {/* Dynamic Progress Bar */}
               <div className="w-full bg-gray-100 h-2 rounded-full mt-6 overflow-hidden">
-                <div className="bg-magicAccent h-full w-2/3 animate-pulse rounded-full"></div>
+                <div 
+                  className="bg-magicAccent h-full rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                ></div>
               </div>
             </div>
           ) : (
