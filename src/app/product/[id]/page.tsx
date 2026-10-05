@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Heart, Ruler, Sparkles, ChevronRight, ShieldCheck } from "lucide-react";
-// YAHAN PATH FIX KIYA HAI:
 import VirtualFittingRoom from "../../../components/VirtualFittingRoom";
 
 export default function ProductPage() {
@@ -10,6 +9,7 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState("M");
   const [is3DOpen, setIs3DOpen] = useState(false);
 
+  // Yeh data ab hum 3D room mein bhejenge
   const product = {
     name: "Oversized Cotton T-Shirt",
     brand: "ESSENTIALS",
@@ -105,7 +105,8 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {is3DOpen && <VirtualFittingRoom onClose={() => setIs3DOpen(false)} />}
+      {/* YAHAN HUMNE PRODUCT BHEJA HAI */}
+      {is3DOpen && <VirtualFittingRoom onClose={() => setIs3DOpen(false)} product={product} />}
     </>
   );
 }

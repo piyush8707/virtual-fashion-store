@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Heart, Sparkles } from "lucide-react";
-import Image from "next/image";
+import Link from "next/link"; // <-- Yahan Link add kiya hai
 
 // Dummy data for our premium clothing line
 const products = [
@@ -65,7 +65,8 @@ export default function ProductGrid() {
         {/* Product Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {products.map((product) => (
-            <div key={product.id} className="group cursor-pointer flex flex-col">
+            // Yahan div ki jagah Link laga diya hai, jisse click par naya page khulega
+            <Link href={`/product/${product.id}`} key={product.id} className="group cursor-pointer flex flex-col">
               <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-gray-100 mb-4">
                 {/* Product Image */}
                 <img 
@@ -74,18 +75,21 @@ export default function ProductGrid() {
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                 />
                 
-                {/* 3D Badge (Only shows if toggle is off, otherwise shows avatar preview logic) */}
+                {/* 3D Badge */}
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold tracking-wider text-magicAccent flex items-center space-x-1">
                   <Sparkles className="w-3 h-3" />
                   <span>3D READY</span>
                 </div>
                 
-                {/* Wishlist Button */}
-                <button className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 hover:bg-white transition-colors">
+                {/* Wishlist Button (Prevent default taaki page na change ho wishlist dabane par) */}
+                <button 
+                  onClick={(e) => e.preventDefault()} 
+                  className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 hover:bg-white transition-colors z-10"
+                >
                   <Heart className="w-4 h-4" />
                 </button>
 
-                {/* Simulated 3D Avatar Overlay (when toggle is ON) */}
+                {/* Simulated 3D Avatar Overlay */}
                 {viewOnMe && (
                   <div className="absolute inset-0 bg-magicAccent/10 backdrop-blur-[2px] flex items-center justify-center">
                     <p className="bg-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg text-magicAccent">
@@ -101,7 +105,7 @@ export default function ProductGrid() {
                 <h3 className="text-sm font-medium text-textMain truncate">{product.name}</h3>
                 <p className="mt-1 text-sm font-semibold text-textMain">{product.price}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
