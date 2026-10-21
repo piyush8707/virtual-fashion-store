@@ -1,17 +1,16 @@
 "use client";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment, ContactShadows } from "@react-three/drei";
-import { X, Loader2, Info } from "lucide-react";
+import { X, Loader2, Info, Palette } from "lucide-react";
 import { Suspense, useRef, useState } from "react";
 import { useAvatarStore } from "../store/useAvatarStore";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 
-// Hologram Avatar jisme ab kapde pehanne ki functionality hai
-function HologramAvatar({ color, isFitting }: { color: string, isFitting: boolean }) {
+// Hologram mein ab 'garmentColor' bhi pass ho raha hai
+function HologramAvatar({ color, isFitting, garmentColor }: { color: string, isFitting: boolean, garmentColor: string }) {
   const groupRef = useRef<THREE.Group>(null);
 
-  // Halke se saans lene (breathing) ka animation
   useFrame((state) => {
     if (groupRef.current) {
       groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.05 - 1;
@@ -32,14 +31,14 @@ function HologramAvatar({ color, isFitting }: { color: string, isFitting: boolea
         <meshStandardMaterial color={color} wireframe emissive={color} emissiveIntensity={0.5} />
       </mesh>
 
-      {/* Torso (Chest & Stomach) - Yahan Fit Check kaam karega */}
+      {/* Torso (Chest & Stomach) - Color update dynamically */}
       <mesh position={[0, 1.2, 0]}>
         <cylinderGeometry args={[0.6, 0.5, 1.5, 32]} />
         <meshStandardMaterial 
-          color={isFitting ? "#F3F4F6" : color} // Agar pehna hai toh solid light grey color
-          wireframe={!isFitting} // Agar nahi pehna toh wireframe
-          emissive={isFitting ? "#ffffff" : color} 
-          emissiveIntensity={isFitting ? 0.1 : 0.4} 
+          color={isFitting ? garmentColor : color} 
+          wireframe={!isFitting} 
+          emissive={isFitting ? garmentColor : color} 
+          emissiveIntensity={isFitting ? 0.2 : 0.4} 
         />
       </mesh>
 
@@ -47,10 +46,10 @@ function HologramAvatar({ color, isFitting }: { color: string, isFitting: boolea
       <mesh position={[0, 1.9, 0]}>
         <capsuleGeometry args={[0.15, 1.4, 16, 32]} rotation={[0, 0, Math.PI / 2]} />
         <meshStandardMaterial 
-          color={isFitting ? "#F3F4F6" : color} 
+          color={isFitting ? garmentColor : color} 
           wireframe={!isFitting} 
-          emissive={isFitting ? "#ffffff" : color} 
-          emissiveIntensity={isFitting ? 0.1 : 0.6} 
+          emissive={isFitting ? garmentColor : color} 
+          emissiveIntensity={isFitting ? 0.2 : 0.6} 
         />
       </mesh>
     </group>
@@ -65,10 +64,21 @@ export default function VirtualFittingRoom({
   product: { name: string, brand: string, price: string } 
 }) {
   const hasAvatar = useAvatarStore((state) => state.hasAvatar);
-  const [isFitting, setIsFitting] = useState(false); // Naya state Fit Check ke liye
-  const [xRayMode, setXRayMode] = useState(false);   // Naya state X-Ray ke liye
+  const [isFitting, setIsFitting] = useState(false);
+  const [xRayMode, setXRayMode] = useState(false);
+  
+  // Naya state color change karne ke liye
+  const [garmentColor, setGarmentColor] = useState("#F3F4F6"); // Default White/Grey
 
   const avatarColor = hasAvatar ? "#10B981" : "#4F46E5";
+
+  // Available colors array
+  const colors = [
+    { name: "Arctic White", hex: "#F3F4F6" },
+    { name: "Obsidian Black", hex: "#1F2937" },
+    { name: "Crimson Red", hex: "#DC2626" },
+    { name: "Ocean Blue", hex: "#2563EB" }
+  ];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-studioDark/95 backdrop-blur-xl">
@@ -95,7 +105,6 @@ export default function VirtualFittingRoom({
         <h3 className="text-lg font-medium">{product.name}</h3>
         <p className="text-sm font-semibold text-gray-400 mt-1">{product.price}</p>
         
-        {/* Status Indicator */}
         <div className="mt-4 pt-4 border-t border-white/10">
           <div className="flex justify-between items-center text-xs font-mono">
             <span className="text-gray-400">STATUS:</span>
@@ -104,6 +113,29 @@ export default function VirtualFittingRoom({
             </span>
           </div>
         </div>
+
+        {/* NAYA FEATURE: Real-time Color Picker (Sirf tab dikhega jab Fit Check on ho) */}
+        {isFitting && (
+          <div className="mt-6 pt-4 border-t border-white/10 animate-in fade-in duration-300">
+            <div className="flex items-center space-x-2 text-gray-300 mb-3">
+              <Palette className="w-4 h-4" />
+              <span className="text-xs font-bold tracking-widest uppercase">Select Color</span>
+            </div>
+            <div className="flex space-x-3">
+              {colors.map((c) => (
+                <button
+                  key={c.hex}
+                  onClick={() => setGarmentColor(c.hex)}
+                  title={c.name}
+                  className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
+                    garmentColor === c.hex ? "border-magicAccent scale-110 shadow-[0_0_10px_rgba(79,70,229,0.8)]" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: c.hex }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="w-full h-full relative cursor-grab active:cursor-grabbing">
@@ -117,7 +149,11 @@ export default function VirtualFittingRoom({
             <ambientLight intensity={1} />
             <spotLight position={[5, 5, 5]} angle={0.2} penumbra={1} intensity={2} />
             
-            <HologramAvatar color={xRayMode ? "#EF4444" : avatarColor} isFitting={isFitting} />
+            <HologramAvatar 
+              color={xRayMode ? "#EF4444" : avatarColor} 
+              isFitting={isFitting} 
+              garmentColor={garmentColor}
+            />
 
             <Environment preset="city" />
             <ContactShadows position={[0, -1, 0]} opacity={0.6} scale={10} blur={2} far={4} />
