@@ -1,15 +1,26 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Heart, Ruler, Sparkles, ChevronRight, ShieldCheck } from "lucide-react";
+import { Heart, Ruler, Sparkles, ChevronRight, ShieldCheck, Check } from "lucide-react";
 import VirtualFittingRoom from "../../../components/VirtualFittingRoom";
+import { useAvatarStore } from "../../../store/useAvatarStore"; // Global Memory Import ki
+import Link from "next/link";
 
 export default function ProductPage() {
   const params = useParams();
   const [selectedSize, setSelectedSize] = useState("M");
   const [is3DOpen, setIs3DOpen] = useState(false);
+  
+  // Website ka dimag check kar raha hai ki avatar hai ya nahi
+  const hasAvatar = useAvatarStore((state) => state.hasAvatar);
 
-  // Yeh data ab hum 3D room mein bhejenge
+  // Agar avatar ban chuka hai, toh AI automatically 'L' size recommend karega
+  useEffect(() => {
+    if (hasAvatar) {
+      setSelectedSize("L");
+    }
+  }, [hasAvatar]);
+
   const product = {
     name: "Oversized Cotton T-Shirt",
     brand: "ESSENTIALS",
@@ -25,7 +36,7 @@ export default function ProductPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="flex items-center space-x-2 text-sm text-textMuted mb-8">
-            <span>Home</span>
+            <Link href="/" className="hover:text-magicAccent transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
             <span>Men</span>
             <ChevronRight className="w-4 h-4" />
@@ -56,6 +67,15 @@ export default function ProductPage() {
                     <span>Size Guide</span>
                   </button>
                 </div>
+                
+                {/* AI Size Recommendation Badge (Sirf tab dikhega jab Avatar Ready ho) */}
+                {hasAvatar && (
+                  <div className="mb-4 inline-flex items-center space-x-2 bg-magicAccent/10 text-magicAccent px-4 py-2 rounded-lg text-sm font-semibold animate-in fade-in slide-in-from-left-4 duration-500">
+                    <Sparkles className="w-4 h-4" />
+                    <span>AI Predicted Size: L (Based on your 3D Mesh)</span>
+                  </div>
+                )}
+
                 <div className="flex space-x-4">
                   {product.sizes.map((size) => (
                     <button
@@ -63,11 +83,12 @@ export default function ProductPage() {
                       onClick={() => setSelectedSize(size)}
                       className={`w-14 h-14 rounded-full flex items-center justify-center text-sm font-medium border transition-all ${
                         selectedSize === size 
-                        ? 'border-textMain bg-textMain text-white' 
+                        ? 'border-magicAccent bg-magicAccent text-white shadow-md' 
                         : 'border-gray-300 text-textMain hover:border-textMain'
                       }`}
                     >
-                      {size}
+                      {selectedSize === size && hasAvatar && size === "L" ? <Check className="w-5 h-5 absolute" /> : null}
+                      <span className={selectedSize === size && hasAvatar && size === "L" ? "opacity-0" : ""}>{size}</span>
                     </button>
                   ))}
                 </div>
@@ -76,14 +97,14 @@ export default function ProductPage() {
               <div className="flex flex-col space-y-4">
                 <button 
                   onClick={() => setIs3DOpen(true)}
-                  className="w-full py-4 bg-magicAccent text-white font-semibold rounded-xl flex items-center justify-center space-x-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                  className="w-full py-4 bg-textMain text-white font-semibold rounded-xl flex items-center justify-center space-x-2 hover:bg-gray-800 transition-colors shadow-lg"
                 >
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className="w-5 h-5 text-magicAccent" />
                   <span>Try it in 3D Fitting Room</span>
                 </button>
                 
                 <div className="flex space-x-4">
-                  <button className="flex-1 py-4 bg-white border border-gray-300 text-textMain font-semibold rounded-xl hover:border-textMain transition-colors">
+                  <button className="flex-1 py-4 bg-magicAccent text-white font-semibold rounded-xl hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-200">
                     Add to Cart
                   </button>
                   <button className="p-4 bg-white border border-gray-300 text-textMain rounded-xl hover:border-red-500 hover:text-red-500 transition-colors">
@@ -105,7 +126,6 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {/* YAHAN HUMNE PRODUCT BHEJA HAI */}
       {is3DOpen && <VirtualFittingRoom onClose={() => setIs3DOpen(false)} product={product} />}
     </>
   );
