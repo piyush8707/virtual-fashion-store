@@ -3,18 +3,19 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Heart, Ruler, Sparkles, ChevronRight, ShieldCheck, Check } from "lucide-react";
 import VirtualFittingRoom from "../../../components/VirtualFittingRoom";
-import { useAvatarStore } from "../../../store/useAvatarStore"; // Global Memory Import ki
+import { useAvatarStore } from "../../../store/useAvatarStore";
 import Link from "next/link";
+import { useCartStore } from "../../../store/useCartStore";
+import CartDrawer from "../../../components/CartDrawer";
 
 export default function ProductPage() {
   const params = useParams();
   const [selectedSize, setSelectedSize] = useState("M");
   const [is3DOpen, setIs3DOpen] = useState(false);
   
-  // Website ka dimag check kar raha hai ki avatar hai ya nahi
   const hasAvatar = useAvatarStore((state) => state.hasAvatar);
+  const addToCart = useCartStore((state) => state.addToCart);
 
-  // Agar avatar ban chuka hai, toh AI automatically 'L' size recommend karega
   useEffect(() => {
     if (hasAvatar) {
       setSelectedSize("L");
@@ -68,7 +69,6 @@ export default function ProductPage() {
                   </button>
                 </div>
                 
-                {/* AI Size Recommendation Badge (Sirf tab dikhega jab Avatar Ready ho) */}
                 {hasAvatar && (
                   <div className="mb-4 inline-flex items-center space-x-2 bg-magicAccent/10 text-magicAccent px-4 py-2 rounded-lg text-sm font-semibold animate-in fade-in slide-in-from-left-4 duration-500">
                     <Sparkles className="w-4 h-4" />
@@ -104,7 +104,16 @@ export default function ProductPage() {
                 </button>
                 
                 <div className="flex space-x-4">
-                  <button className="flex-1 py-4 bg-magicAccent text-white font-semibold rounded-xl hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-200">
+                  <button 
+                    onClick={() => addToCart({
+                      id: params.id as string || "1",
+                      name: product.name,
+                      price: product.price,
+                      size: selectedSize,
+                      image: product.image
+                    })}
+                    className="flex-1 py-4 bg-magicAccent text-white font-semibold rounded-xl hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-200"
+                  >
                     Add to Cart
                   </button>
                   <button className="p-4 bg-white border border-gray-300 text-textMain rounded-xl hover:border-red-500 hover:text-red-500 transition-colors">
@@ -127,6 +136,7 @@ export default function ProductPage() {
       </div>
 
       {is3DOpen && <VirtualFittingRoom onClose={() => setIs3DOpen(false)} product={product} />}
+      <CartDrawer />
     </>
   );
 }
