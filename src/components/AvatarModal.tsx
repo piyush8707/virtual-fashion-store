@@ -1,9 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { X, UploadCloud, Camera, Sparkles, CheckCircle2 } from "lucide-react";
 import { useAvatarStore } from "../store/useAvatarStore";
 
-// Backend URL configuration - Professional way to handle API URLs in frontend code
 const BACKEND_API_URL = "http://localhost:8000";
 
 export default function AvatarModal({ onClose }: { onClose: () => void }) {
@@ -12,32 +11,52 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
   const [loadingMessage, setLoadingMessage] = useState("Initializing Engine...");
   const [progress, setProgress] = useState(0);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const setAvatarReady = useAvatarStore((state) => state.setAvatarReady);
 
-  const handleUpload = () => {
-    setIsUploading(true);
-    setProgress(5); // Initial progress
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setIsUploading(true);
+      setLoadingMessage("Uploading photo to secure server...");
+      setProgress(10);
 
-    // Yahan hum FastAPI ke SSE stream se connect kar rahe hain
+      // 1. Photo ko Backend par bhej rahe hain
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        await fetch(`${BACKEND_API_URL}/api/upload-photo`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        // 2. Upload successful hone ke baad AI Generation (SSE) start karenge
+        startAIGeneration();
+      } catch (error) {
+        console.error("Upload failed", error);
+        setLoadingMessage("Upload Failed. Try again.");
+      }
+    }
+  };
+
+  const startAIGeneration = () => {
     const eventSource = new EventSource(`${BACKEND_API_URL}/api/stream-avatar`);
 
-    // Jaise hi naya data (tukda) aayega, yeh function chalega
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setLoadingMessage(data.message);
       setProgress(data.progress);
 
       if (data.progress === 100) {
-        eventSource.close(); // Stream band kar do
+        eventSource.close();
         setIsUploading(false);
         setIsSuccess(true);
         setAvatarReady();
-        
         setTimeout(() => onClose(), 2000);
       }
     };
 
-    // Agar connection tut jaye
     eventSource.onerror = (error) => {
       console.error("SSE Error:", error);
       eventSource.close();
@@ -78,12 +97,8 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
               <h3 className="text-xl font-bold text-textMain mb-2">{loadingMessage}</h3>
               <p className="text-textMuted text-sm">{progress}% Complete</p>
               
-              {/* Dynamic Progress Bar */}
               <div className="w-full bg-gray-100 h-2 rounded-full mt-6 overflow-hidden">
-                <div 
-                  className="bg-magicAccent h-full rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${progress}%` }}
-                ></div>
+                <div className="bg-magicAccent h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
               </div>
             </div>
           ) : (
@@ -95,12 +110,20 @@ export default function AvatarModal({ onClose }: { onClose: () => void }) {
                 Upload a full-body, front-facing photo with good lighting for the most accurate 3D measurements.
               </p>
 
+              <input 
+                type="file" 
+                accept="image/jpeg, image/png"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+
               <div 
-                onClick={handleUpload}
+                onClick={() => fileInputRef.current?.click()} 
                 className="w-full border-2 border-dashed border-gray-300 hover:border-magicAccent bg-gray-50 hover:bg-magicAccent/5 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors group"
               >
                 <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-magicAccent mb-3 transition-colors" />
-                <span className="text-sm font-semibold text-textMain">Click to upload photo</span>
+                <span className="text-sm font-semibold text-textMain">Click to select photo from PC</span>
                 <span className="text-xs text-gray-400 mt-1">JPEG, PNG up to 10MB</span>
               </div>
             </>
